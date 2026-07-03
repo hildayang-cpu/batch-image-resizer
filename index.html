@@ -63,7 +63,7 @@
             text-align: left;
         }
         th { background: #e2e8f0; }
-        input, select {
+        input {
             width: 100%;
             padding: 4px;
             border: 1px solid #cbd5e1;
@@ -85,8 +85,6 @@
         .btn-success:hover { background: #059669; }
         .btn-danger { background: #ef4444; padding: 4px 8px; font-size: 12px; }
         .btn-danger:hover { background: #dc2626; }
-        
-        /* 甘特圖顯示區域 */
         .chart-area {
             display: flex;
             flex-direction: column;
@@ -126,13 +124,13 @@
                         <tr>
                             <th style="width: 30%">任務名稱</th>
                             <th style="width: 30%">開始日期</th>
-                            <th style="width: 25%">持續天数</th>
+                            <th style="width: 25%">持續天數</th>
                             <th style="width: 15%">操作</th>
                         </tr>
                     </thead>
                     <tbody id="taskTableBody">
                         <tr>
-                            <td><td><input type="text" value="UI 介面改版" class="task-name"></td>
+                            <td><input type="text" value="UI 介面改版" class="task-name"></td>
                             <td><input type="date" value="2026-07-06" class="task-start"></td>
                             <td><input type="number" value="3" min="1" class="task-days"></td>
                             <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
@@ -152,9 +150,9 @@
 
         <div>
             <div class="chart-area" id="capture-zone">
-                <h3 id="chart-title-display" style="margin-top: 0; color: #1e293b;">專案時程視覺化</h3>
+                <h3 style="margin-top: 0; color: #1e293b;">專案時程視覺化</h3>
                 <div id="gantt-render-container">
-                    <div class="mermaid" id="mermaid-code-box">
+                    <div class="mermaid">
                         gantt
                             title 專案時程表
                             dateFormat  YYYY-MM-DD
@@ -174,15 +172,11 @@
 </div>
 
 <script>
-    // 初始化 Mermaid
     mermaid.initialize({ startOnLoad: true, theme: 'default' });
 
-    // 新增任務橫列
     function addTaskRow() {
         const tbody = document.getElementById('taskTableBody');
         const tr = document.createElement('tr');
-        
-        // 抓取最後一筆任務的日期當作預設值，方便填寫
         const lastDateInput = document.querySelector('.task-start:last-of-type');
         const defaultDate = lastDateInput ? lastDateInput.value : new Date().toISOString().split('T')[0];
 
@@ -196,7 +190,6 @@
         updateChart();
     }
 
-    // 讀取表格並重新繪製甘特圖
     function updateChart() {
         const names = document.querySelectorAll('.task-name');
         const starts = document.querySelectorAll('.task-start');
@@ -207,28 +200,24 @@
             return;
         }
 
-        // 組裝 Mermaid 語法
-        let mermaidSyntax = `gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n`;
+        let mermaidSyntax = 'gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n';
         
         for (let i = 0; i < names.length; i++) {
-            const name = names[i].value.replace(/:/g, '-'); // 避免 Mermaid 語法衝突
+            const name = names[i].value.replace(/:/g, '-');
             const start = starts[i].value;
             const day = days[i].value;
-            mermaidSyntax += `  ${name} : ${start}, ${day}d\n`;
+            if(start && day) {
+                mermaidSyntax += `  ${name} : ${start}, ${day}d\n`;
+            }
         }
 
-        // 清空舊圖表並重新渲染
         const container = document.getElementById('gantt-render-container');
         container.innerHTML = `<div class="mermaid">${mermaidSyntax}</div>`;
-        
-        // 重新執行 Mermaid 解析
         mermaid.run();
     }
 
-    // 將甘特圖區塊轉成圖片下載
     function downloadGanttPhoto() {
         const zone = document.getElementById('capture-zone');
-        
         html2canvas(zone, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
             link.download = `gantt_chart_${Date.now()}.png`;
