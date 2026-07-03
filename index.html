@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚀 在線甘特圖製作工具</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
@@ -130,15 +130,9 @@
                     </thead>
                     <tbody id="taskTableBody">
                         <tr>
-                            <td><input type="text" value="UI 介面改版" class="task-name"></td>
+                            <td><input type="text" value="UI介面改版" class="task-name"></td>
                             <td><input type="date" value="2026-07-06" class="task-start"></td>
                             <td><input type="number" value="3" min="1" class="task-days"></td>
-                            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" value="核心算法優化" class="task-name"></td>
-                            <td><input type="date" value="2026-07-09" class="task-start"></td>
-                            <td><input type="number" value="4" min="1" class="task-days"></td>
                             <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
                         </tr>
                     </tbody>
@@ -152,15 +146,14 @@
             <div class="chart-area" id="capture-zone">
                 <h3 style="margin-top: 0; color: #1e293b;">專案時程視覺化</h3>
                 <div id="gantt-render-container">
-                    <div class="mermaid">
-                        gantt
-                            title 專案時程表
-                            dateFormat  YYYY-MM-DD
-                            axisFormat  %m/%d
-                            section 執行任務
-                            UI 介面改版 : 2026-07-06, 3d
-                            核心算法優化 : 2026-07-09, 4d
-                    </div>
+                    <pre class="mermaid" id="mermaid-target">
+gantt
+    title 專案時程表
+    dateFormat YYYY-MM-DD
+    axisFormat %m/%d
+    section 執行任務
+    UI介面改版 : 2026-07-06, 3d
+                    </pre>
                 </div>
             </div>
             
@@ -172,14 +165,15 @@
 </div>
 
 <script>
-    // 初始化 Mermaid
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    document.addEventListener("DOMContentLoaded", function() {
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    });
 
     function addTaskRow() {
         const tbody = document.getElementById('taskTableBody');
         const tr = document.createElement('tr');
         const lastDateInput = document.querySelector('.task-start:last-of-type');
-        const defaultDate = lastDateInput ? lastDateInput.value : new Date().toISOString().split('T')[0];
+        const defaultDate = lastDateInput ? lastDateInput.value : "2026-07-06";
 
         tr.innerHTML = `
             <td><input type="text" value="新任務" class="task-name"></td>
@@ -196,24 +190,21 @@
         const starts = document.querySelectorAll('.task-start');
         const days = document.querySelectorAll('.task-days');
         
-        if(names.length === 0) {
-            alert('請至少保留一項任務！');
-            return;
-        }
+        if(names.length === 0) return;
 
-        let mermaidSyntax = 'gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n';
+        let code = "gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n";
         
         for (let i = 0; i < names.length; i++) {
-            const name = names[i].value.replace(/:/g, '-');
-            const start = starts[i].value;
-            const day = days[i].value;
-            if(start && day) {
-                mermaidSyntax += `  ${name} : ${start}, ${day}d\n`;
+            const n = names[i].value.replace(/[:\n]/g, '-');
+            const s = starts[i].value;
+            const d = days[i].value;
+            if(s && d) {
+                code += `  ${n} : ${s}, ${d}d\n`;
             }
         }
 
         const container = document.getElementById('gantt-render-container');
-        container.innerHTML = `<div class="mermaid">${mermaidSyntax}</div>`;
+        container.innerHTML = `<pre class="mermaid">${code}</pre>`;
         mermaid.run();
     }
 
@@ -221,7 +212,7 @@
         const zone = document.getElementById('capture-zone');
         html2canvas(zone, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `gantt_chart_${Date.now()}.png`;
+            link.download = `gantt_${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
