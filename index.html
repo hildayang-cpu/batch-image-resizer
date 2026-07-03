@@ -92,7 +92,7 @@
 <body>
 
 <div class="container">
-    <h1>批次圖片壓縮工具 <small style="font-size: 14px; color: #7f8c8d;">(目標 500KB 內)</small></h1>
+    <h1>🚀 圖片批次壓縮專業版 <small style="font-size: 14px; color: #7f8c8d;">(目標 500KB 內)</small></h1>
     
     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
         <p style="margin: 0; font-size: 16px; color: #4a5568;">點擊或拖曳多張圖片至此處上傳</p>
@@ -138,6 +138,7 @@
         previewBody.innerHTML = '';
         previewTable.style.display = 'table';
         downloadBtn.disabled = true;
+        downloadBtn.innerText = '一鍵下載所有圖片 (ZIP)'; // 重設按鈕文字
         compressedFiles = [];
         statusText.innerText = `正在處理 ${files.length} 張圖片...`;
 
@@ -174,6 +175,8 @@
         statusText.innerText = `處理完成！共 ${compressedFiles.length} 張圖片。`;
         if (compressedFiles.length > 0) {
             downloadBtn.disabled = false;
+            // 2. 這裡小改動：當處理完畢，按鈕文字會多出提示
+            downloadBtn.innerText = '一鍵下載所有圖片 (ZIP) 👈 已打包完成';
         }
     }
 
@@ -192,7 +195,6 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    // 如果原本就小於 500KB，且不需要縮放尺寸，先嘗試直接輸出
                     if (file.size <= MAX_SIZE_BYTE) {
                         canvas.width = width;
                         canvas.height = height;
@@ -201,11 +203,9 @@
                         return;
                     }
 
-                    // 逐步精細化調整：初估縮放比例與畫質
                     let quality = 0.85;
                     let scale = 1.0;
                     
-                    // 如果圖檔太大（例如高達數百萬畫素），先做預防性縮放尺寸
                     if (file.size > 5 * 1024 * 1024) scale = 0.5; 
                     else if (file.size > 2 * 1024 * 1024) scale = 0.75;
 
@@ -215,7 +215,6 @@
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                        // 統一轉成 jpeg 格式比較好控制 500KB 限制
                         const outputType = file.type === 'image/png' ? 'image/jpeg' : file.type;
 
                         canvas.toBlob((blob) => {
@@ -223,17 +222,16 @@
                                 reject(new Error('壓縮失敗'));
                                 return;
                             }
-                            // 如果壓縮後還是大於 500KB，且還有調整空間
                             if (blob.size > MAX_SIZE_BYTE && (quality > 0.2 || scale > 0.3)) {
                                 if (quality > 0.4) {
-                                    quality -= 0.15; // 先降畫質
+                                    quality -= 0.15;
                                 } else {
-                                    scale -= 0.15;   // 畫質太低了，改降解析度尺寸
+                                    scale -= 0.15;   
                                     quality = 0.6;
                                 }
-                                attemptCompress(); // 遞迴重試
+                                attemptCompress();
                             } else {
-                                resolve(blob); // 達標或觸底，輸出
+                                resolve(blob);
                             }
                         }, outputType, quality);
                     }
@@ -254,8 +252,6 @@
         const zip = new JSZip();
 
         compressedFiles.forEach(fileData => {
-            // 保持原副檔名，但因為內部強制轉 jpeg 壓制，若原圖為 png 且被轉為 jpeg，可視需求調整。
-            // 這裡採用最穩健的做法：保留原本名稱
             zip.file(fileData.name, fileData.blob);
         });
 
