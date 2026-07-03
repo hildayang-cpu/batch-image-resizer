@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批次圖片壓縮與打包工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f5f7fb;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #3498db;
+            padding: 30px;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            background: #f0f4f8;
+            border-color: #2980b9;
+        }
+        #fileInput {
+            display: none;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+        .btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #27ae60;
+        }
+        .btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .status {
+            font-size: 14px;
+            color: #666;
+        }
+        #previewTable {
+            width: 100%;
+            margin-top: 25px;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        #previewTable th, #previewTable td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        #previewTable th {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        .success { color: #27ae60; font-weight: bold; }
+        .processing { color: #f39c12; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>批次圖片壓縮工具 <small style="font-size: 14px; color: #7f8c8d;">(目標 500KB 內)</small></h1>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <p style="margin: 0; font-size: 16px; color: #4a5568;">點擊或拖曳多張圖片至此處上傳</p>
+        <input type="file" id="fileInput" multiple accept="image/*">
+    </div>
+
+    <div class="controls">
+        <div class="status" id="statusText">尚未選擇檔案</div>
+        <button id="downloadBtn" class="btn" disabled onclick="downloadAll()">一鍵下載所有圖片 (ZIP)</button>
+    </div>
+
+    <table id="previewTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>檔名</th>
+                <th>原始大小</th>
+                <th>壓縮後大小</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const statusText = document.getElementById('statusText');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const previewTable = document.getElementById('previewTable');
+    const previewBody = document.getElementById('previewBody');
+
+    const MAX_SIZE_BYTE = 500 * 1024; // 500KB
+    let compressedFiles = []; // 儲存壓縮後的 Blob 物件與檔名
+
+    fileInput.addEventListener('change', handleFileSelect);
+
+    // 處理檔案選取
+    async function handleFileSelect(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        // 初始化介面
+        previewBody.innerHTML = '';
+        previewTable.style.display = 'table';
+        downloadBtn.disabled = true;
+        compressedFiles = [];
+        statusText.innerText = `正在處理 ${files.length} 張圖片...`;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // 建立表格橫列
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${file.name}</td>
+                <td>${(file.size / 1024).toFixed(1)} KB</td>
+                <td id="size-${i}" class="processing">壓縮中...</td>
+                <td id="status-${i}" class="processing">處理中...</td>
+            `;
+            previewBody.appendChild(row);
+
+            // 執行非同步壓縮
+            try {
+                const compressedBlob = await compressImage(file);
+                compressedFiles.push({ blob: compressedBlob, name: file.name });
+                
+                // 更新該列狀態
+                document.getElementById(`size-${i}`).innerText = `${(compressedBlob.size / 1024).toFixed(1)} KB`;
+                document.getElementById(`size-${i}`).className = 'success';
+                document.getElementById(`status-${i}`).innerText = '完成';
+                document.getElementById(`status-${i}`).className = 'success';
+            } catch (error) {
+                console.error(error);
+                document.getElementById(`status-${i}`).innerText = '失敗';
+                document.getElementById(`status-${i}`).style.color = 'red';
+            }
+        }
+
+        statusText.innerText = `處理完成！共 ${compressedFiles.length} 張圖片。`;
+        if (compressedFiles.length > 0) {
+            downloadBtn.disabled = false;
+        }
+    }
+
+    // 核心壓縮邏輯 (二分法調整畫質與尺寸)
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // 如果原本就小於 500KB，且不需要縮放尺寸，先嘗試直接輸出
+                    if (file.size <= MAX_SIZE_BYTE) {
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => resolve(blob), file.type, 0.9);
+                        return;
+                    }
+
+                    // 逐步精細化調整：初估縮放比例與畫質
+                    let quality = 0.85;
+                    let scale = 1.0;
+                    
+                    // 如果圖檔太大（例如高達數百萬畫素），先做預防性縮放尺寸
+                    if (file.size > 5 * 1024 * 1024) scale = 0.5; 
+                    else if (file.size > 2 * 1024 * 1024) scale = 0.75;
+
+                    function attemptCompress() {
+                        canvas.width = width * scale;
+                        canvas.height = height * scale;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // 統一轉成 jpeg 格式比較好控制 500KB 限制
+                        const outputType = file.type === 'image/png' ? 'image/jpeg' : file.type;
+
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                reject(new Error('壓縮失敗'));
+                                return;
+                            }
+                            // 如果壓縮後還是大於 500KB，且還有調整空間
+                            if (blob.size > MAX_SIZE_BYTE && (quality > 0.2 || scale > 0.3)) {
+                                if (quality > 0.4) {
+                                    quality -= 0.15; // 先降畫質
+                                } else {
+                                    scale -= 0.15;   // 畫質太低了，改降解析度尺寸
+                                    quality = 0.6;
+                                }
+                                attemptCompress(); // 遞迴重試
+                            } else {
+                                resolve(blob); // 達標或觸底，輸出
+                            }
+                        }, outputType, quality);
+                    }
+
+                    attemptCompress();
+                };
+                img.onerror = () => reject(new Error('圖片載入失敗'));
+            };
+            reader.onerror = () => reject(new Error('檔案讀取失敗'));
+        });
+    }
+
+    // 打包 ZIP 並下載
+    function downloadAll() {
+        if (compressedFiles.length === 0) return;
+        
+        statusText.innerText = '正在打包 ZIP 壓縮檔...';
+        const zip = new JSZip();
+
+        compressedFiles.forEach(fileData => {
+            // 保持原副檔名，但因為內部強制轉 jpeg 壓制，若原圖為 png 且被轉為 jpeg，可視需求調整。
+            // 這裡採用最穩健的做法：保留原本名稱
+            zip.file(fileData.name, fileData.blob);
+        });
+
+        zip.generateAsync({ type: 'blob' }).then(function (content) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `compressed_images_${Date.now()}.zip`;
+            link.click();
+            statusText.innerText = '下載完成！';
+        });
+    }
+</script>
+
+</body>
+</html>
