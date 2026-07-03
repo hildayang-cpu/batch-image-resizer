@@ -3,264 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>批次圖片壓縮與打包工具</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>🚀 在線甘特圖製作工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            background-color: #f5f7fb;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            color: #334155;
         }
         .container {
+            max-width: 1100px;
+            margin: 0 auto;
             background: white;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         h1 {
             text-align: center;
-            color: #2c3e50;
+            color: #1e293b;
             margin-bottom: 30px;
         }
-        .upload-area {
-            border: 2px dashed #3498db;
-            padding: 30px;
-            text-align: center;
-            background: #f8fafc;
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        @media (min-width: 900px) {
+            .workspace { grid-template-columns: 450px 1fr; }
+        }
+        .panel {
+            background: #f1f5f9;
+            padding: 20px;
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
+            border: 1px solid #e2e8f0;
         }
-        .upload-area:hover {
-            background: #f0f4f8;
-            border-color: #2980b9;
-        }
-        #fileInput {
-            display: none;
-        }
-        .controls {
-            margin-top: 20px;
+        .panel-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #0f172a;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 15px;
         }
-        .btn {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .btn:hover {
-            background-color: #27ae60;
-        }
-        .btn:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .status {
-            font-size: 14px;
-            color: #666;
-        }
-        #previewTable {
+        table {
             width: 100%;
-            margin-top: 25px;
             border-collapse: collapse;
-            font-size: 14px;
+            margin-bottom: 15px;
+            background: white;
+            font-size: 13px;
         }
-        #previewTable th, #previewTable td {
-            border: 1px solid #e2e8f0;
-            padding: 12px;
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px;
             text-align: left;
         }
-        #previewTable th {
-            background-color: #f1f5f9;
-            color: #475569;
+        th { background: #e2e8f0; }
+        input, select {
+            width: 100%;
+            padding: 4px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        .success { color: #27ae60; font-weight: bold; }
-        .processing { color: #f39c12; }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #ef4444; padding: 4px 8px; font-size: 12px; }
+        .btn-danger:hover { background: #dc2626; }
+        
+        /* 甘特圖顯示區域 */
+        .chart-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow-x: auto;
+        }
+        #gantt-render-container {
+            width: 100%;
+            min-width: 500px;
+        }
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚀 圖片批次壓縮專業版 <small style="font-size: 14px; color: #7f8c8d;">(目標 500KB 內)</small></h1>
+    <h1>🚀 專案規劃甘特圖產生器</h1>
     
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <p style="margin: 0; font-size: 16px; color: #4a5568;">點擊或拖曳多張圖片至此處上傳</p>
-        <input type="file" id="fileInput" multiple accept="image/*">
-    </div>
+    <div class="workspace">
+        <div class="panel">
+            <div class="panel-title">
+                <span>📋 任務排程表</span>
+                <button class="btn" onclick="addTaskRow()">＋ 新增任務</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30%">任務名稱</th>
+                            <th style="width: 30%">開始日期</th>
+                            <th style="width: 25%">持續天数</th>
+                            <th style="width: 15%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                        <tr>
+                            <td><td><input type="text" value="UI 介面改版" class="task-name"></td>
+                            <td><input type="date" value="2026-07-06" class="task-start"></td>
+                            <td><input type="number" value="3" min="1" class="task-days"></td>
+                            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="核心算法優化" class="task-name"></td>
+                            <td><input type="date" value="2026-07-09" class="task-start"></td>
+                            <td><input type="number" value="4" min="1" class="task-days"></td>
+                            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button class="btn btn-success" style="width: 100%;" onclick="updateChart()">🔄 更新甘特圖圖表</button>
+        </div>
 
-    <div class="controls">
-        <div class="status" id="statusText">尚未選擇檔案</div>
-        <button id="downloadBtn" class="btn" disabled onclick="downloadAll()">一鍵下載所有圖片 (ZIP)</button>
+        <div>
+            <div class="chart-area" id="capture-zone">
+                <h3 id="chart-title-display" style="margin-top: 0; color: #1e293b;">專案時程視覺化</h3>
+                <div id="gantt-render-container">
+                    <div class="mermaid" id="mermaid-code-box">
+                        gantt
+                            title 專案時程表
+                            dateFormat  YYYY-MM-DD
+                            axisFormat  %m/%d
+                            section 執行任務
+                            UI 介面改版 : 2026-07-06, 3d
+                            核心算法優化 : 2026-07-09, 4d
+                    </div>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-success" onclick="downloadGanttPhoto()">📸 一鍵下載甘特圖圖片 (PNG)</button>
+            </div>
+        </div>
     </div>
-
-    <table id="previewTable" style="display: none;">
-        <thead>
-            <tr>
-                <th>檔名</th>
-                <th>原始大小</th>
-                <th>壓縮後大小</th>
-                <th>狀態</th>
-            </tr>
-        </thead>
-        <tbody id="previewBody"></tbody>
-    </table>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const statusText = document.getElementById('statusText');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const previewTable = document.getElementById('previewTable');
-    const previewBody = document.getElementById('previewBody');
+    // 初始化 Mermaid
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
 
-    const MAX_SIZE_BYTE = 500 * 1024; // 500KB
-    let compressedFiles = []; // 儲存壓縮後的 Blob 物件與檔名
-
-    fileInput.addEventListener('change', handleFileSelect);
-
-    // 處理檔案選取
-    async function handleFileSelect(e) {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        // 初始化介面
-        previewBody.innerHTML = '';
-        previewTable.style.display = 'table';
-        downloadBtn.disabled = true;
-        downloadBtn.innerText = '一鍵下載所有圖片 (ZIP)'; // 重設按鈕文字
-        compressedFiles = [];
-        statusText.innerText = `正在處理 ${files.length} 張圖片...`;
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            
-            // 建立表格橫列
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${file.name}</td>
-                <td>${(file.size / 1024).toFixed(1)} KB</td>
-                <td id="size-${i}" class="processing">壓縮中...</td>
-                <td id="status-${i}" class="processing">處理中...</td>
-            `;
-            previewBody.appendChild(row);
-
-            // 執行非同步壓縮
-            try {
-                const compressedBlob = await compressImage(file);
-                compressedFiles.push({ blob: compressedBlob, name: file.name });
-                
-                // 更新該列狀態
-                document.getElementById(`size-${i}`).innerText = `${(compressedBlob.size / 1024).toFixed(1)} KB`;
-                document.getElementById(`size-${i}`).className = 'success';
-                document.getElementById(`status-${i}`).innerText = '完成';
-                document.getElementById(`status-${i}`).className = 'success';
-            } catch (error) {
-                console.error(error);
-                document.getElementById(`status-${i}`).innerText = '失敗';
-                document.getElementById(`status-${i}`).style.color = 'red';
-            }
-        }
-
-        statusText.innerText = `處理完成！共 ${compressedFiles.length} 張圖片。`;
-        if (compressedFiles.length > 0) {
-            downloadBtn.disabled = false;
-            // 2. 這裡小改動：當處理完畢，按鈕文字會多出提示
-            downloadBtn.innerText = '一鍵下載所有圖片 (ZIP) 👈 已打包完成';
-        }
-    }
-
-    // 核心壓縮邏輯 (二分法調整畫質與尺寸)
-    function compressImage(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function (event) {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = function () {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (file.size <= MAX_SIZE_BYTE) {
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => resolve(blob), file.type, 0.9);
-                        return;
-                    }
-
-                    let quality = 0.85;
-                    let scale = 1.0;
-                    
-                    if (file.size > 5 * 1024 * 1024) scale = 0.5; 
-                    else if (file.size > 2 * 1024 * 1024) scale = 0.75;
-
-                    function attemptCompress() {
-                        canvas.width = width * scale;
-                        canvas.height = height * scale;
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                        const outputType = file.type === 'image/png' ? 'image/jpeg' : file.type;
-
-                        canvas.toBlob((blob) => {
-                            if (!blob) {
-                                reject(new Error('壓縮失敗'));
-                                return;
-                            }
-                            if (blob.size > MAX_SIZE_BYTE && (quality > 0.2 || scale > 0.3)) {
-                                if (quality > 0.4) {
-                                    quality -= 0.15;
-                                } else {
-                                    scale -= 0.15;   
-                                    quality = 0.6;
-                                }
-                                attemptCompress();
-                            } else {
-                                resolve(blob);
-                            }
-                        }, outputType, quality);
-                    }
-
-                    attemptCompress();
-                };
-                img.onerror = () => reject(new Error('圖片載入失敗'));
-            };
-            reader.onerror = () => reject(new Error('檔案讀取失敗'));
-        });
-    }
-
-    // 打包 ZIP 並下載
-    function downloadAll() {
-        if (compressedFiles.length === 0) return;
+    // 新增任務橫列
+    function addTaskRow() {
+        const tbody = document.getElementById('taskTableBody');
+        const tr = document.createElement('tr');
         
-        statusText.innerText = '正在打包 ZIP 壓縮檔...';
-        const zip = new JSZip();
+        // 抓取最後一筆任務的日期當作預設值，方便填寫
+        const lastDateInput = document.querySelector('.task-start:last-of-type');
+        const defaultDate = lastDateInput ? lastDateInput.value : new Date().toISOString().split('T')[0];
 
-        compressedFiles.forEach(fileData => {
-            zip.file(fileData.name, fileData.blob);
-        });
+        tr.innerHTML = `
+            <td><input type="text" value="新任務" class="task-name"></td>
+            <td><input type="date" value="${defaultDate}" class="task-start"></td>
+            <td><input type="number" value="2" min="1" class="task-days"></td>
+            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+        updateChart();
+    }
 
-        zip.generateAsync({ type: 'blob' }).then(function (content) {
+    // 讀取表格並重新繪製甘特圖
+    function updateChart() {
+        const names = document.querySelectorAll('.task-name');
+        const starts = document.querySelectorAll('.task-start');
+        const days = document.querySelectorAll('.task-days');
+        
+        if(names.length === 0) {
+            alert('請至少保留一項任務！');
+            return;
+        }
+
+        // 組裝 Mermaid 語法
+        let mermaidSyntax = `gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n`;
+        
+        for (let i = 0; i < names.length; i++) {
+            const name = names[i].value.replace(/:/g, '-'); // 避免 Mermaid 語法衝突
+            const start = starts[i].value;
+            const day = days[i].value;
+            mermaidSyntax += `  ${name} : ${start}, ${day}d\n`;
+        }
+
+        // 清空舊圖表並重新渲染
+        const container = document.getElementById('gantt-render-container');
+        container.innerHTML = `<div class="mermaid">${mermaidSyntax}</div>`;
+        
+        // 重新執行 Mermaid 解析
+        mermaid.run();
+    }
+
+    // 將甘特圖區塊轉成圖片下載
+    function downloadGanttPhoto() {
+        const zone = document.getElementById('capture-zone');
+        
+        html2canvas(zone, { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = `compressed_images_${Date.now()}.zip`;
+            link.download = `gantt_chart_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
             link.click();
-            statusText.innerText = '下載完成！';
         });
     }
 </script>
