@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎨 高級現代化甘特圖排程系統 Pro</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -18,6 +16,7 @@
             --border-color: #e2e8f0;
             --success: #10b981;
             --danger: #ef4444;
+            --chart-bar: #818cf8;
         }
 
         [data-theme="dark"] {
@@ -28,182 +27,50 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
+            --chart-bar: #6366f1;
         }
 
-        * {
-            box-sizing: border-box;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-
+        * { box-sizing: border-box; transition: background-color 0.2s, border-color 0.2s; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 24px;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            margin: 0; padding: 24px; background-color: var(--bg-main); color: var(--text-main);
         }
-
-        .app-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
+        .app-container { max-width: 1400px; margin: 0 auto; }
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding: 16px 24px;
-            background: var(--panel-bg);
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; padding: 16px 24px; background: var(--panel-bg);
+            border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);
         }
-
-        h1 {
-            margin: 0;
-            font-size: 22px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        h1 { margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
         .theme-toggle {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 9999px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
+            background: transparent; border: 1px solid var(--border-color); color: var(--text-main);
+            padding: 8px 16px; border-radius: 9999px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500;
         }
-
-        .workspace {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-
-        @media (min-width: 1024px) {
-            .workspace { grid-template-columns: 480px 1fr; }
-        }
-
+        .workspace { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        @media (min-width: 1024px) { .workspace { grid-template-columns: 480px 1fr; } }
         .card {
-            background: var(--panel-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-            padding: 24px;
+            background: var(--panel-bg); border-radius: 16px; border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); padding: 24px; display: flex; flex-direction: column;
         }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            background-color: var(--primary); color: white; border: none; padding: 10px 16px;
+            border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px;
         }
-
         .btn:hover { background-color: var(--primary-hover); }
         .btn-success { background-color: var(--success); }
         .btn-success:hover { background-color: #059669; }
-        .btn-danger { background-color: var(--danger); }
-        .btn-danger:hover { background-color: #dc2626; }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
-
-        .table-container {
-            overflow-x: auto;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        th {
-            background-color: var(--bg-main);
-            color: var(--text-muted);
-            padding: 12px;
-            font-weight: 600;
-            text-align: left;
-        }
-
-        td {
-            padding: 12px;
-            border-top: 1px solid var(--border-color);
-            background: var(--panel-bg);
-        }
-
-        input, select {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background-color: var(--panel-bg);
-            color: var(--text-main);
-            font-size: 13px;
-        }
-
-        .chart-section {
-            min-height: 500px;
-        }
-
-        .chart-wrapper {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
-            display: flex;
-            justify-content: center;
-        }
-
-        [data-theme="dark"] .chart-wrapper { background: #1e293b; }
-
-        .action-bar {
-            margin-top: 20px;
-        }
-
-        .style-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
+        .table-container { overflow-x: auto; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background-color: var(--bg-main); color: var(--text-muted); padding: 12px; font-weight: 600; text-align: left; }
+        td { padding: 12px; border-top: 1px solid var(--border-color); background: var(--panel-bg); }
+        input { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--panel-bg); color: var(--text-main); font-size: 13px; }
+        .chart-wrapper { background: var(--panel-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); overflow-x: auto; display: flex; justify-content: center; }
+        canvas { background: var(--panel-bg); border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -219,102 +86,60 @@
     <div class="workspace">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><i class="fa-solid fa-list-check"></i> 任務排程與維護</h2>
-                <button class="btn" onclick="addTableRow()">加 新增任務</button>
+                <h2 class="card-title"><i class="fa-solid fa-list-check"></i> 任務排程管理</h2>
+                <button class="btn" onclick="addTaskRow()"><i class="fa-solid fa-plus"></i> 新增任務</button>
             </div>
 
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 35%">任務名稱</th>
-                            <th style="width: 25%">主題/分類</th>
-                            <th style="width: 25%">開始日期</th>
+                            <th style="width: 50%">任務名稱</th>
+                            <th style="width: 35%">開始日期</th>
                             <th style="width: 15%">天數</th>
-                            <th style="width: 10%"></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="taskItems">
                         <tr>
                             <td><input type="text" value="需求分析與規格確認" class="t-name"></td>
-                            <td>
-                                <select class="t-section">
-                                    <option value="規劃階段">規劃階段</option>
-                                    <option value="開發階段">開發階段</option>
-                                    <option value="測試與上線">測試與上線</option>
-                                </select>
-                            </td>
                             <td><input type="date" value="2026-07-01" class="t-start"></td>
-                            <td><input type="number" value="4" min="1" class="t-days"></td>
-                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+                            <td><input type="number" value="5" min="1" class="t-days"></td>
+                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); drawGantt();"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                         <tr>
                             <td><input type="text" value="前端優雅介面開發" class="t-name"></td>
-                            <td>
-                                <select class="t-section">
-                                    <option value="規劃階段">規劃階段</option>
-                                    <option value="開發階段" selected>開發階段</option>
-                                    <option value="測試與上線">測試與上線</option>
-                                </select>
-                            </td>
-                            <td><input type="date" value="2026-07-05" class="t-start"></td>
-                            <td><input type="number" value="6" min="1" class="t-days"></td>
-                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+                            <td><input type="date" value="2026-07-06" class="t-start"></td>
+                            <td><input type="number" value="7" min="1" class="t-days"></td>
+                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); drawGantt();"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="style-options">
-                <div>
-                    <label style="font-size: 13px; font-weight: 500; color: var(--text-muted);">🎨 圖表風格</label>
-                    <select id="chartTheme" onchange="refreshGantt()" style="margin-top:6px;">
-                        <option value="default">經典優雅</option>
-                        <option value="forest">森林綠意</option>
-                        <option value="neutral">商務沉穩</option>
-                        <option value="base">簡約透亮</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 13px; font-weight: 500; color: var(--text-muted);">📅 日期格式</label>
-                    <select id="axisFormat" onchange="refreshGantt()" style="margin-top:6px;">
-                        <option value="%m/%d">月/日</option>
-                        <option value="%Y-%m-%d">年-月-日</option>
-                    </select>
-                </div>
-            </div>
-
-            <button class="btn btn-success" style="width: 100%; margin-top: 20px; font-size:15px; height:45px;" onclick="refreshGantt()">
-                🔄 立即更新時程視覺化
+            <button class="btn btn-success" style="width: 100%; font-size:15px; height:45px;" onclick="drawGantt()">
+                <i class="fa-solid fa-rotate"></i> 立即更新時程圖表
             </button>
         </div>
 
-        <div class="card chart-section">
+        <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><i class="fa-solid fa-eye"></i> 即時視覺化時程看板</h2>
+                <h2 class="card-title"><i class="fa-solid fa-eye"></i> 即時甘特圖看板</h2>
+                <button class="btn btn-outline" onclick="downloadCanvas()"><i class="fa-solid fa-image"></i> 下載圖片</button>
             </div>
-            
-            <div class="chart-wrapper" id="ganttCaptureBlock">
-                <div id="mermaidGanttContainer" style="width:100%;"></div>
-            </div>
-
-            <div class="action-bar">
-                <button class="btn" onclick="exportAsImage()"><i class="fa-solid fa-image"></i> 導出高畫質簡報圖片 (PNG)</button>
+            <div class="chart-wrapper">
+                <canvas id="ganttCanvas" width="700" height="400"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
-
     function toggleTheme() {
         const body = document.documentElement;
-        const currentTheme = body.getAttribute('data-theme');
         const icon = document.querySelector('.theme-toggle i');
         const text = document.querySelector('.theme-toggle span');
-        
-        if (currentTheme === 'dark') {
+        if (body.getAttribute('data-theme') === 'dark') {
             body.removeAttribute('data-theme');
             icon.className = 'fa-solid fa-moon';
             text.innerText = '切換護眼模式';
@@ -323,91 +148,135 @@
             icon.className = 'fa-solid fa-sun';
             text.innerText = '切換明亮模式';
         }
-        refreshGantt();
+        drawGantt();
     }
 
-    function addTableRow() {
+    function addTaskRow() {
         const tbody = document.getElementById('taskItems');
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><input type="text" value="新項目排程" class="t-name"></td>
-            <td>
-                <select class="t-section">
-                    <option value="規劃階段">規劃階段</option>
-                    <option value="開發階段">開發階段</option>
-                    <option value="測試與上線">測試與上線</option>
-                </select>
-            </td>
             <td><input type="date" value="2026-07-01" class="t-start"></td>
-            <td><input type="number" value="3" min="1" class="t-days"></td>
-            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+            <td><input type="number" value="4" min="1" class="t-days"></td>
+            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); drawGantt();"><i class="fa-solid fa-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
-        refreshGantt();
+        drawGantt();
     }
 
-    function refreshGantt() {
+    function drawGantt() {
+        const canvas = document.getElementById('ganttCanvas');
+        const ctx = canvas.getContext('2d');
         const names = document.querySelectorAll('.t-name');
-        const sections = document.querySelectorAll('.t-section');
         const starts = document.querySelectorAll('.t-start');
         const days = document.querySelectorAll('.t-days');
+
+        // 清空畫布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 取得目前主題顏色
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textStyle = isDark ? '#f8fafc' : '#1e293b';
+        const gridStyle = isDark ? '#334155' : '#e2e8f0';
+        const barColor = isDark ? '#6366f1' : '#4f46e5';
+
+        // 基礎排版設定
+        const leftPadding = 180;
+        const topPadding = 50;
+        const rowHeight = 40;
         
-        if (names.length === 0) {
-            document.getElementById('mermaidGanttContainer').innerHTML = '<div>目前尚無任何任務！</div>';
+        // 自動調整畫布高度
+        canvas.height = Math.max(250, names.length * rowHeight + topPadding + 40);
+
+        // 找出日期區間
+        let minDate = null, maxDate = null;
+        const parsedTasks = [];
+
+        for (let i = 0; i < names.length; i++) {
+            if (!starts[i].value || !days[i].value) continue;
+            const start = new Date(starts[i].value);
+            const duration = parseInt(days[i].value);
+            const end = new Date(start);
+            end.setDate(start.getDate() + duration);
+
+            if (!minDate || start < minDate) minDate = new Date(start);
+            if (!maxDate || end > maxDate) maxDate = new Date(end);
+
+            parsedTasks.push({ name: names[i].value, start, duration });
+        }
+
+        if (parsedTasks.length === 0) {
+            ctx.fillStyle = textStyle;
+            ctx.font = '14px sans-serif';
+            ctx.fillText('請填寫任務資訊以生成圖表', 50, 50);
             return;
         }
 
-        const selectedTheme = document.getElementById('chartTheme').value;
-        const selectedAxis = document.getElementById('axisFormat').value;
+        // 基礎日期調整（前後留白 2 天方便檢視）
+        minDate.setDate(minDate.getDate() - 2);
+        maxDate.setDate(maxDate.getDate() + 2);
+        const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+        const colWidth = (canvas.width - leftPadding - 20) / totalDays;
 
-        let script = 'gantt\n';
-        script += 'dateFormat YYYY-MM-DD\n';
-        script += 'axisFormat ' + selectedAxis + '\n';
-        
-        const groups = {};
-        for (let i = 0; i < names.length; i++) {
-            const sec = sections[i].value;
-            if (!groups[sec]) groups[sec] = [];
-            groups[sec].push({
-                name: names[i].value.replace(/:/g, '-'),
-                start: starts[i].value,
-                day: days[i].value
-            });
+        // 1. 畫縱向日曆格線與日期標題
+        ctx.font = '12px sans-serif';
+        for (let i = 0; i <= totalDays; i += Math.ceil(totalDays / 8)) {
+            const current = new Date(minDate);
+            current.setDate(minDate.getDate() + i);
+            const x = leftPadding + i * colWidth;
+
+            ctx.strokeStyle = gridStyle;
+            ctx.beginPath();
+            ctx.moveTo(x, topPadding - 15);
+            ctx.lineTo(x, canvas.height - 20);
+            ctx.stroke();
+
+            ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+            const dateStr = (current.getMonth() + 1) + '/' + current.getDate();
+            ctx.fillText(dateStr, x - 10, topPadding - 25);
         }
 
-        for (const [secName, tasks] of Object.entries(groups)) {
-            script += 'section ' + secName + '\n';
-            tasks.forEach(t => {
-                if (t.start && t.day) {
-                    script += t.name + ' : active, ' + t.start + ', ' + t.day + 'd\n';
-                }
-            });
-        }
+        // 2. 繪製任務列
+        parsedTasks.forEach((task, index) => {
+            const y = topPadding + index * rowHeight;
 
-        const container = document.getElementById('mermaidGanttContainer');
-        container.innerHTML = '<pre class="mermaid">' + script + '</pre>';
-        
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: isDark ? 'dark' : selectedTheme
+            // 繪製任務名稱
+            ctx.fillStyle = textStyle;
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(task.name, 20, y + 18);
+
+            // 計算時間條位置
+            const daysFromStart = Math.ceil((task.start - minDate) / (1000 * 60 * 60 * 24));
+            const barX = leftPadding + daysFromStart * colWidth;
+            const barW = task.duration * colWidth;
+
+            // 繪製美觀的圓角進度條
+            ctx.fillStyle = barColor;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(barX, y, barW, 24, 6);
+            } else {
+                ctx.rect(barX, y, barW, 24);
+            }
+            ctx.fill();
+
+            // 標示天數文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(task.duration + '天', barX + 8, y + 16);
         });
-        
-        mermaid.run();
     }
 
-    function exportAsImage() {
-        const element = document.getElementById('ganttCaptureBlock');
-        html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = '甘特圖專案報表.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
+    function downloadCanvas() {
+        const canvas = document.getElementById('ganttCanvas');
+        const link = document.createElement('a');
+        link.download = '專案時程甘特圖.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        refreshGantt();
+    document.addEventListener("DOMContentLoaded", () => {
+        drawGantt();
     });
 </script>
 
