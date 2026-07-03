@@ -3,65 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>甘特圖製作工具</title>
+    <title>🎨 高級現代化甘特圖排程系統 Pro</title>
+    <!-- 引入美化與功能所需的 CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 20px; background: #f8fafc; }
-        .box { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
-        th { background: #e2e8f0; }
-        input { width: 100%; padding: 4px; box-sizing: border-box; }
-        .btn { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .btn-green { background: #10b981; }
-        .chart { background: white; padding: 20px; border: 1px solid #e2e8f0; margin-top: 20px; overflow-x: auto; }
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-main: #f1f5f9;
+            --panel-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        /* 護眼暗黑模式變數 */
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-main: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 頂部標頭與工具列 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px 24px;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        /* 主工作區配置 */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .workspace {
+                grid-template-columns: 480px 1fr;
+            }
+        }
+
+        /* 面板基本樣式 */
+        .card {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 漂亮的按鈕設計 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #059669; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background-color: var(--bg-main); }
+
+        /* 任務列表美化 */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-main);
+            color: var(--text-muted);
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            background: var(--panel-bg);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--panel-bg);
+            color: var(--text-main);
+            font-size: 13px;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        /* 可視化區 */
+        .chart-section {
+            min-height: 500px;
+        }
+
+        .chart-wrapper {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        [data-theme="dark"] .chart-wrapper {
+            background: #1e293b; /* 暗黑模式下的圖表背景 */
+        }
+
+        .action-bar {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .style-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
-<div class="box">
-    <h1>🚀 專案規劃甘特圖產生器</h1>
-    <div>
-        <button class="btn" onclick="addTrack()">＋ 新增任務</button>
-        <table>
-            <thead>
-                <tr><th>任務名稱</th><th>開始日期</th><th>天數</th></tr>
-            </thead>
-            <tbody id="list">
-                <tr>
-                    <td><input type="text" value="UI介面改版" class="t-name"></td>
-                    <td><input type="date" value="2026-07-06" class="t-start"></td>
-                    <td><input type="number" value="3" class="t-days"></td>
-                </tr>
-            </tbody>
-        </table>
-        <button class="btn btn-green" style="width:100%" onclick="draw()">🔄 更新甘特圖圖表</button>
-    </div>
-    <div class="chart">
-        <div id="target"><pre class="mermaid">gantt\n  title 時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 任務\n  UI介面改版 : 2026-07-06, 3d</pre></div>
+
+<div class="app-container">
+    <header>
+        <h1><i class="fa-solid fa-chart-gantt" style="color: var(--primary);"></i> 智慧型現代化甘特圖排程系統 Pro</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fa-solid fa-moon"></i> <span>切換護眼模式</span>
+        </button>
+    </header>
+
+    <div class="workspace">
+        <!-- 左側：多功能控制面板 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa-solid fa-list-check"></i> 任務排程與維護</h2>
+                <button class="btn" onclick="addTableRow()"><i class="fa-solid fa-plus"></i> 新增任務</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">任務名稱</th>
+                            <th style="width: 25%">主題/分類</th>
+                            <th style="width: 25%">開始日期</th>
+                            <th style="width: 15%">天數</th>
+                            <th style="width: 10%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskItems">
+                        <tr>
+                            <td><input type="text" value="需求分析與規格確認" class="t-name"></td>
+                            <td>
+                                <select class="t-section">
+                                    <option value="規劃階段">🎯 規劃階段</option>
+                                    <option value="開發階段">💻 開發階段</option>
+                                    <option value="測試與上線">🚀 測試與上線</option>
+                                </select>
+                            </td>
+                            <td><input type="date" value="2026-07-01" class="t-start"></td>
+                            <td><input type="number" value="4" min="1" class="t-days"></td>
+                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="前端優雅介面開發" class="t-name"></td>
+                            <td>
+                                <select class="t-section">
+                                    <option value="規劃階段">🎯 規劃階段</option>
+                                    <option value="開發階段" selected>💻 開發階段</option>
+                                    <option value="測試與上線">🚀 測試與上線</option>
+                                </select>
+                            </td>
+                            <td><input type="date" value="2026-07-05" class="t-start"></td>
+                            <td><input type="number" value="6" min="1" class="t-days"></td>
+                            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 外觀與風格配置區 -->
+            <div class="style-options">
+                <div>
+                    <label style="font-size: 13px; font-weight: 500; color: var(--text-muted);">🎨 圖表配色風格</label>
+                    <select id="chartTheme" onchange="refreshGantt()" style="margin-top:6px;">
+                        <option value="default">經典優雅 (Default)</option>
+                        <option value="forest">森林綠意 (Forest)</option>
+                        <option value="neutral">商務沉穩 (Neutral)</option>
+                        <option value="base">簡約透亮 (Base)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 13px; font-weight: 500; color: var(--text-muted);">📅 日期顯示格式</label>
+                    <select id="axisFormat" onchange="refreshGantt()" style="margin-top:6px;">
+                        <option value="%m/%d">月/日 (07/01)</option>
+                        <option value="%Y-%m-%d">完整年-月-日</option>
+                        <option value="第 %W 週">依專案週次顯示</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-success" style="width: 100%; margin-top: 20px; font-size:15px; height:45px;" onclick="refreshGantt()">
+                <i class="fa-solid fa-rotate"></i> 立即更新時程視覺化
+            </button>
+        </div>
+
+        <!-- 右側：高解析視覺化圖表與高階導出 -->
+        <div class="card chart-section">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa-solid fa-eye"></i> 即時視覺化時程看板</h2>
+            </div>
+            
+            <div class="chart-wrapper" id="ganttCaptureBlock">
+                <div id="mermaidGanttContainer" style="width:100%;">
+                    <!-- 初始架構 -->
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn" onclick="exportAsImage()"><i class="fa-solid fa-image"></i> 導出 4K 超高畫質簡報圖片 (PNG)</button>
+            </div>
+        </div>
     </div>
 </div>
+
 <script>
-    mermaid.initialize({ startOnLoad: true });
-    function addTrack() {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td><input type="text" value="新任務" class="t-name"></td><td><input type="date" value="2026-07-06" class="t-start"></td><td><input type="number" value="2" class="t-days"></td>';
-        document.getElementById('list').appendChild(tr);
-        draw();
+    // 初始化 Mermaid 環境
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+
+    // 切換深淺色護眼主題
+    function toggleTheme() {
+        const body = document.documentElement;
+        const currentTheme = body.getAttribute('data-theme');
+        const icon = document.querySelector('.theme-toggle i');
+        const text = document.querySelector('.theme-toggle span');
+        
+        if (currentTheme === 'dark') {
+            body.removeAttribute('data-theme');
+            icon.className = 'fa-solid fa-moon';
+            text.innerText = '切換護眼模式';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            icon.className = 'fa-solid fa-sun';
+            text.innerText = '切換明亮模式';
+        }
+        refreshGantt();
     }
-    function draw() {
+
+    // 動態新增任務欄位
+    function addTableRow() {
+        const tbody = document.getElementById('taskItems');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" value="新項目排程" class="t-name"></td>
+            <td>
+                <select class="t-section">
+                    <option value="規劃階段">🎯 規劃階段</option>
+                    <option value="開發階段">💻 開發階段</option>
+                    <option value="測試與上線">🚀 測試與上線</option>
+                </select>
+            </td>
+            <td><input type="date" value="${new Date().toISOString().split('T')[0]}" class="t-start"></td>
+            <td><input type="number" value="3" min="1" class="t-days"></td>
+            <td><button class="btn-outline" style="color:var(--danger); padding:6px;" onclick="this.parentElement.parentElement.remove(); refreshGantt();"><i class="fa-solid fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+        refreshGantt();
+    }
+
+    // 核心重繪邏輯
+    function refreshGantt() {
         const names = document.querySelectorAll('.t-name');
+        const sections = document.querySelectorAll('.t-section');
         const starts = document.querySelectorAll('.t-start');
         const days = document.querySelectorAll('.t-days');
-        let txt = "gantt\n  title 時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 任務\n";
-        for (let i = 0; i < names.length; i++) {
-            if(starts[i].value && days[i].value) {
-                txt += "  " + names[i].value + " : " + starts[i].value + ", " + days[i].value + "d\n";
-            }
+        
+        if (names.length === 0) {
+            document.getElementById('mermaidGanttContainer').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;">目前尚無任何任務排程！</div>';
+            return;
         }
-        document.getElementById('target').innerHTML = '<pre class="mermaid">' + txt + '</pre>';
+
+        const selectedTheme = document.getElementById('chartTheme').value;
+        const selectedAxis = document.getElementById('axisFormat').value;
+
+        // 組裝乾淨安全的 Mermaid 程式碼
+        let script = `gantt\n  dateFormat YYYY-MM-DD\n  axisFormat ${selectedAxis}\n`;
+        
+        // 依照群組進行排序與彙整
+        const groups = {};
+        for (let i = 0; i < names.length; i++) {
+            const sec = sections[i].value;
+            if (!groups[sec]) groups[sec] = [];
+            groups[sec].push({
+                name: names[i].value.replace(/[:\n]/g, '-'),
+                start: starts[i].value,
+                day: days[i].value
+            });
+        }
+
+        for (const [secName, tasks] of Object.entries(groups)) {
+            script += `  section ${secName}\n`;
+            tasks.forEach(t => {
+                if (t.start && t.day) {
+                    script += `  ${t.name} : active, ${t.start}, ${t.day}d\n`;
+                }
+            });
+        }
+
+        // 清除、重新注入並要求 Mermaid 重新編譯
+        const container = document.getElementById('mermaidGanttContainer');
+        container.innerHTML = `<pre class="mermaid">${script}</pre>`;
+        
+        // 套用動態佈景設定
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: isDark ? 'dark' : selectedTheme
+        });
+        
         mermaid.run();
     }
+
+    // 高品質圖片下載
+    function exportAsImage() {
+        const element = document.getElementById('ganttCaptureBlock');
+        // 提升 Canvas 導出解析度以防模糊
+        html2canvas(element, { scale: 3, useCORS: true }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `甘特圖專案報表_${new Date().toLocaleDateString()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+
+    // 初始載入渲染
+    document.addEventListener("DOMContentLoaded", function() {
+        refreshGantt();
+    });
 </script>
+
 </body>
 </html>
