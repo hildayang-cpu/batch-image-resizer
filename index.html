@@ -3,221 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 在線甘特圖製作工具</title>
+    <title>甘特圖製作工具</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8fafc;
-            color: #334155;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #1e293b;
-            margin-bottom: 30px;
-        }
-        .workspace {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-        @media (min-width: 900px) {
-            .workspace { grid-template-columns: 450px 1fr; }
-        }
-        .panel {
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-        .panel-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #0f172a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            background: white;
-            font-size: 13px;
-        }
-        th, td {
-            border: 1px solid #cbd5e1;
-            padding: 8px;
-            text-align: left;
-        }
+        body { font-family: sans-serif; margin: 20px; background: #f8fafc; }
+        .box { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
         th { background: #e2e8f0; }
-        input {
-            width: 100%;
-            padding: 4px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .btn:hover { background: #2563eb; }
-        .btn-success { background: #10b981; }
-        .btn-success:hover { background: #059669; }
-        .btn-danger { background: #ef4444; padding: 4px 8px; font-size: 12px; }
-        .btn-danger:hover { background: #dc2626; }
-        .chart-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
-        }
-        #gantt-render-container {
-            width: 100%;
-            min-width: 500px;
-        }
-        .actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
+        input { width: 100%; padding: 4px; box-sizing: border-box; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-green { background: #10b981; }
+        .chart { background: white; padding: 20px; border: 1px solid #e2e8f0; margin-top: 20px; overflow-x: auto; }
     </style>
 </head>
 <body>
-
-<div class="container">
+<div class="box">
     <h1>🚀 專案規劃甘特圖產生器</h1>
-    
-    <div class="workspace">
-        <div class="panel">
-            <div class="panel-title">
-                <span>📋 任務排程表</span>
-                <button class="btn" onclick="addTaskRow()">＋ 新增任務</button>
-            </div>
-            
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 30%">任務名稱</th>
-                            <th style="width: 30%">開始日期</th>
-                            <th style="width: 25%">持續天數</th>
-                            <th style="width: 15%">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="taskTableBody">
-                        <tr>
-                            <td><input type="text" value="UI介面改版" class="task-name"></td>
-                            <td><input type="date" value="2026-07-06" class="task-start"></td>
-                            <td><input type="number" value="3" min="1" class="task-days"></td>
-                            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <button class="btn btn-success" style="width: 100%;" onclick="updateChart()">🔄 更新甘特圖圖表</button>
-        </div>
-
-        <div>
-            <div class="chart-area" id="capture-zone">
-                <h3 style="margin-top: 0; color: #1e293b;">專案時程視覺化</h3>
-                <div id="gantt-render-container">
-                    <pre class="mermaid" id="mermaid-target">
-gantt
-    title 專案時程表
-    dateFormat YYYY-MM-DD
-    axisFormat %m/%d
-    section 執行任務
-    UI介面改版 : 2026-07-06, 3d
-                    </pre>
-                </div>
-            </div>
-            
-            <div class="actions">
-                <button class="btn btn-success" onclick="downloadGanttPhoto()">📸 一鍵下載甘特圖圖片 (PNG)</button>
-            </div>
-        </div>
+    <div>
+        <button class="btn" onclick="addTrack()">＋ 新增任務</button>
+        <table>
+            <thead>
+                <tr><th>任務名稱</th><th>開始日期</th><th>天數</th></tr>
+            </thead>
+            <tbody id="list">
+                <tr>
+                    <td><input type="text" value="UI介面改版" class="t-name"></td>
+                    <td><input type="date" value="2026-07-06" class="t-start"></td>
+                    <td><input type="number" value="3" class="t-days"></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn btn-green" style="width:100%" onclick="draw()">🔄 更新甘特圖圖表</button>
+    </div>
+    <div class="chart">
+        <div id="target"><pre class="mermaid">gantt\n  title 時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 任務\n  UI介面改版 : 2026-07-06, 3d</pre></div>
     </div>
 </div>
-
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        mermaid.initialize({ startOnLoad: true, theme: 'default' });
-    });
-
-    function addTaskRow() {
-        const tbody = document.getElementById('taskTableBody');
+    mermaid.initialize({ startOnLoad: true });
+    function addTrack() {
         const tr = document.createElement('tr');
-        const lastDateInput = document.querySelector('.task-start:last-of-type');
-        const defaultDate = lastDateInput ? lastDateInput.value : "2026-07-06";
-
-        tr.innerHTML = `
-            <td><input type="text" value="新任務" class="task-name"></td>
-            <td><input type="date" value="${defaultDate}" class="task-start"></td>
-            <td><input type="number" value="2" min="1" class="task-days"></td>
-            <td><button class="btn-danger" onclick="this.parentElement.parentElement.remove(); updateChart();">刪除</button></td>
-        `;
-        tbody.appendChild(tr);
-        updateChart();
+        tr.innerHTML = '<td><input type="text" value="新任務" class="t-name"></td><td><input type="date" value="2026-07-06" class="t-start"></td><td><input type="number" value="2" class="t-days"></td>';
+        document.getElementById('list').appendChild(tr);
+        draw();
     }
-
-    function updateChart() {
-        const names = document.querySelectorAll('.task-name');
-        const starts = document.querySelectorAll('.task-start');
-        const days = document.querySelectorAll('.task-days');
-        
-        if(names.length === 0) return;
-
-        let code = "gantt\n  title 專案時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 執行任務\n";
-        
+    function draw() {
+        const names = document.querySelectorAll('.t-name');
+        const starts = document.querySelectorAll('.t-start');
+        const days = document.querySelectorAll('.t-days');
+        let txt = "gantt\n  title 時程表\n  dateFormat YYYY-MM-DD\n  axisFormat %m/%d\n  section 任務\n";
         for (let i = 0; i < names.length; i++) {
-            const n = names[i].value.replace(/[:\n]/g, '-');
-            const s = starts[i].value;
-            const d = days[i].value;
-            if(s && d) {
-                code += `  ${n} : ${s}, ${d}d\n`;
+            if(starts[i].value && days[i].value) {
+                txt += "  " + names[i].value + " : " + starts[i].value + ", " + days[i].value + "d\n";
             }
         }
-
-        const container = document.getElementById('gantt-render-container');
-        container.innerHTML = `<pre class="mermaid">${code}</pre>`;
+        document.getElementById('target').innerHTML = '<pre class="mermaid">' + txt + '</pre>';
         mermaid.run();
     }
-
-    function downloadGanttPhoto() {
-        const zone = document.getElementById('capture-zone');
-        html2canvas(zone, { scale: 2 }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `gantt_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-    }
 </script>
-
 </body>
 </html>
